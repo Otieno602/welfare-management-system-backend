@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# environment variables
+.env
+
+# logs
+logs
+*.log
+
+# runtime data
+pids
+*.pid
+
+# OS files
+.DS_Store
