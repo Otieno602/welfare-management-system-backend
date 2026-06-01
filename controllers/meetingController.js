@@ -21,3 +21,19 @@ export const getMeetings = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateMeeting = async (req, res) => {
+  try {
+    const updatedMeeting = await Meeting.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.status(200).json(updatedMeeting);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
