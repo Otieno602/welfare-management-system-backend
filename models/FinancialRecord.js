@@ -9,7 +9,7 @@ const paymentSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["paid", "unpaid"],
+    enum: ["unpaid", "partial", "paid"],
     default: "unpaid",
   },
 
