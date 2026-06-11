@@ -58,3 +58,20 @@ export const getFinancialRecords = async (req, res) => {
     });
   }
 };
+
+export const updateFinancialRecord = async (req, res) => {
+  try {
+    const updatedRecord =
+      await FinancialRecord.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+
+    res.status(200).json(updatedRecord);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
