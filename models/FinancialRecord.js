@@ -62,4 +62,5 @@ const FinancialRecord = mongoose.model(
   financialRecordSchema
 );
 
+
 export default FinancialRecord;

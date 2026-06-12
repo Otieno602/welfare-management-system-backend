@@ -61,6 +61,37 @@ export const getFinancialRecords = async (req, res) => {
 
 export const updateFinancialRecord = async (req, res) => {
   try {
+
+    const existingRecord =
+      await FinancialRecord.findById(req.params.id);
+
+    if (!existingRecord) {
+      return res.status(404).json({
+        message: "Financial record not found",
+      });
+    }
+
+    for (const payment of req.body.payments) {
+
+      if (
+        payment.amountPaid >
+        existingRecord.amount
+      ) {
+        return res.status(400).json({
+          message:
+            `Amount paid cannot exceed Ksh ${existingRecord.amount}`,
+        });
+      }
+
+    }
+
+    if (payment.amountPaid < 0) {
+      return res.status(400).json({
+         message:
+        "Amount paid cannot be negative",
+      });
+    }
+
     const updatedRecord =
       await FinancialRecord.findByIdAndUpdate(
         req.params.id,
@@ -69,6 +100,7 @@ export const updateFinancialRecord = async (req, res) => {
       );
 
     res.status(200).json(updatedRecord);
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
