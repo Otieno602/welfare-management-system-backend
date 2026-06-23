@@ -3,14 +3,8 @@ import Member from "../models/Member.js";
 
 export const createFinancialRecord = async (req, res) => {
   try {
-    const {
-      title,
-      amount,
-      type,
-      deadline,
-      appliesToAll,
-      selectedMembers,
-    } = req.body;
+    const { title, amount, type, deadline, appliesToAll, selectedMembers } =
+      req.body;
 
     let members = [];
 
@@ -61,9 +55,7 @@ export const getFinancialRecords = async (req, res) => {
 
 export const updateFinancialRecord = async (req, res) => {
   try {
-
-    const existingRecord =
-      await FinancialRecord.findById(req.params.id);
+    const existingRecord = await FinancialRecord.findById(req.params.id);
 
     if (!existingRecord) {
       return res.status(404).json({
@@ -71,36 +63,29 @@ export const updateFinancialRecord = async (req, res) => {
       });
     }
 
-    for (const payment of req.body.payments) {
+    if (req.body.payments) {
+      for (const payment of req.body.payments) {
+        if (payment.amountPaid > existingRecord.amount) {
+          return res.status(400).json({
+            message: `Amount paid cannot exceed Ksh ${existingRecord.amount}`,
+          });
+        }
 
-      if (
-        payment.amountPaid >
-        existingRecord.amount
-      ) {
-        return res.status(400).json({
-          message:
-            `Amount paid cannot exceed Ksh ${existingRecord.amount}`,
-        });
+        if (payment.amountPaid < 0) {
+          return res.status(400).json({
+            message: "Amount paid cannot be negative",
+          });
+        }
       }
-
     }
 
-    if (payment.amountPaid < 0) {
-      return res.status(400).json({
-         message:
-        "Amount paid cannot be negative",
-      });
-    }
-
-    const updatedRecord =
-      await FinancialRecord.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-      );
+    const updatedRecord = await FinancialRecord.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true },
+    );
 
     res.status(200).json(updatedRecord);
-
   } catch (error) {
     res.status(500).json({
       message: error.message,
