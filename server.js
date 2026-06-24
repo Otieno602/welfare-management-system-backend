@@ -4,6 +4,7 @@ import cors from "cors";
 import memberRoutes from "./routes/memberRoutes.js";
 import meetingRoutes from "./routes/meetingRoutes.js";
 import financialRecordRoutes from "./routes/financialRecordRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/members", memberRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/financial-records", financialRecordRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // MongoDB connection
 mongoose.connect("mongodb://127.0.0.1:27017/welfareDB")
