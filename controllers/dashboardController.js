@@ -4,72 +4,80 @@ import FinancialRecord from "../models/FinancialRecord.js";
 
 export const getDashboardStats = async (req, res) => {
   try {
-    // Members
-    const totalMembers = await Member.countDocuments();
+    // Fetch all data in parallel
+    const [members, meetings, financialRecords] = await Promise.all([
+      Member.find(),
+      Meeting.find(),
+      FinancialRecord.find().populate("payments.member", "name"),
+    ]);
 
-    // Meetings
-    const meetings = await Meeting.find();
+    // ===== Summary Statistics =====
+
+    const totalMembers = members.length;
+
     const totalMeetings = meetings.length;
 
-    // Attendance Rate
-    let totalPresent = 0;
-    let totalAttendanceRecords = 0;
+    const totalFinancialRecords = financialRecords.length;
 
-    meetings.forEach((meeting) => {
-      meeting.attendance.forEach((record) => {
-        totalAttendanceRecords++;
+    let attendanceRate = 0;
 
-        if (record.status === "present") {
-          totalPresent++;
-        }
-      });
-    });
+    if (meetings.length > 0) {
+      let totalPresent = 0;
+      let totalAttendance = 0;
 
-    const attendanceRate =
-      totalAttendanceRecords === 0
-        ? 0
-        : Math.round(
-            (totalPresent / totalAttendanceRecords) * 100
-          );
+      meetings.forEach((meeting) => {
+        const attendance = meeting.attendance || [];
 
-    // Financial Records
-    const financialRecords =
-      await FinancialRecord.find();
+        totalPresent += attendance.filter(
+          (record) => record.status === "present",
+        ).length;
 
-    const totalFinancialRecords =
-      financialRecords.length;
-
-    let totalCollected = 0;
-    let totalOutstanding = 0;
-
-    financialRecords.forEach((record) => {
-      record.payments.forEach((payment) => {
-        totalCollected += payment.amountPaid || 0;
+        totalAttendance += attendance.length;
       });
 
-      const expected =
-        record.amount * record.payments.length;
+      attendanceRate =
+        totalAttendance === 0
+          ? 0
+          : Math.round((totalPresent / totalAttendance) * 100);
+    }
 
-      const collected =
+    const totalCollected = financialRecords.reduce(
+      (sum, record) =>
+        sum +
         record.payments.reduce(
-          (sum, payment) =>
-            sum + (payment.amountPaid || 0),
-          0
-        );
+          (paymentSum, payment) => paymentSum + payment.amountPaid,
+          0,
+        ),
+      0,
+    );
 
-      totalOutstanding +=
-        expected - collected;
+    const totalOutstanding = financialRecords.reduce((sum, record) => {
+      const paid = record.payments.reduce(
+        (paymentSum, payment) => paymentSum + payment.amountPaid,
+        0,
+      );
+
+      return sum + (record.amount - paid);
+    }, 0);
+
+    // ===== Dashboard Response =====
+
+    res.json({
+      summary: {
+        totalMembers,
+        totalMeetings,
+        attendanceRate,
+        totalFinancialRecords,
+        totalCollected,
+        totalOutstanding,
+      },
+
+      members,
+
+      meetings,
+
+      financialRecords,
     });
-
-    res.status(200).json({
-      totalMembers,
-      totalMeetings,
-      attendanceRate,
-      totalFinancialRecords,
-      totalCollected,
-      totalOutstanding,
-    });
-
   } catch (error) {
     res.status(500).json({
       message: error.message,
