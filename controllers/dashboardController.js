@@ -60,6 +60,23 @@ export const getDashboardStats = async (req, res) => {
       return sum + (record.amount - paid);
     }, 0);
 
+    // ===== Attendance Trend =====
+
+    const attendanceTrend = meetings.map((meeting) => {
+      const attendance = meeting.attendance || [];
+
+      const present = attendance.filter(
+        (record) => record.status === "present",
+      ).length;
+
+      const total = attendance.length;
+
+      return {
+        meeting: meeting.title,
+        attendanceRate: total === 0 ? 0 : Math.round((present / total) * 100),
+      };
+    });
+
     // ===== Dashboard Response =====
 
     res.json({
@@ -77,10 +94,13 @@ export const getDashboardStats = async (req, res) => {
       meetings,
 
       financialRecords,
+
+      attendanceTrend,
     });
   } catch (error) {
     res.status(500).json({
       message: error.message,
     });
   }
+
 };
