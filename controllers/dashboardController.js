@@ -77,6 +77,35 @@ export const getDashboardStats = async (req, res) => {
       };
     });
 
+    // ===== Monthly Collections =====
+
+    const monthlyCollectionsMap = {};
+
+    financialRecords.forEach((record) => {
+      record.payments.forEach((payment) => {
+        if (!payment.datePaid) return;
+
+        const date = new Date(payment.datePaid);
+
+        const month = `${date.toLocaleString("default", {
+          month: "short",
+        })} ${date.getFullYear()}`;
+
+        if (!monthlyCollectionsMap[month]) {
+          monthlyCollectionsMap[month] = 0;
+        }
+
+        monthlyCollectionsMap[month] += payment.amountPaid;
+      });
+    });
+
+    const monthlyCollections = Object.entries(monthlyCollectionsMap).map(
+      ([month, amount]) => ({
+        month,
+        amount,
+      }),
+    );
+
     // ===== Dashboard Response =====
 
     res.json({
@@ -96,11 +125,12 @@ export const getDashboardStats = async (req, res) => {
       financialRecords,
 
       attendanceTrend,
+
+      monthlyCollections,
     });
   } catch (error) {
     res.status(500).json({
       message: error.message,
     });
   }
-
 };
