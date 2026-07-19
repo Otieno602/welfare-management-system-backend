@@ -79,6 +79,18 @@ export const updateFinancialRecord = async (req, res) => {
       }
     }
 
+    if (req.body.payments) {
+      req.body.payments = req.body.payments.map((payment) => {
+        // If the member has paid something and no payment date exists,
+        // record today's date.
+        if (payment.amountPaid > 0 && !payment.datePaid) {
+          payment.datePaid = new Date();
+        }
+
+        return payment;
+      });
+    }
+
     const updatedRecord = await FinancialRecord.findByIdAndUpdate(
       req.params.id,
       req.body,

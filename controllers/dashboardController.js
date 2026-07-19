@@ -83,9 +83,11 @@ export const getDashboardStats = async (req, res) => {
 
     financialRecords.forEach((record) => {
       record.payments.forEach((payment) => {
-        if (!payment.datePaid) return;
+        // Use the payment date if available.
+        // Otherwise fall back to when the financial record was created.
+        const paymentDate = payment.datePaid || record.createdAt;
 
-        const date = new Date(payment.datePaid);
+        const date = new Date(paymentDate);
 
         const month = `${date.toLocaleString("default", {
           month: "short",
