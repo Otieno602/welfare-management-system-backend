@@ -139,6 +139,29 @@ export const getDashboardStats = async (req, res) => {
 
     const topOutstandingMembers = outstandingMembers.slice(0, 5);
 
+    // Recent Meetings
+    const recentMeetings = meetings
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5)
+      .map((meeting) => {
+        const attendance = meeting.attendance || [];
+
+        const present = attendance.filter(
+          (record) => record.status === "present",
+        ).length;
+
+        const total = attendance.length;
+
+        return {
+          id: meeting._id,
+          title: meeting.title,
+          date: meeting.date,
+          present,
+          total,
+          attendanceRate: total === 0 ? 0 : Math.round((present / total) * 100),
+        };
+      });
+
     // ===== Dashboard Response =====
 
     res.json({
@@ -162,6 +185,8 @@ export const getDashboardStats = async (req, res) => {
       monthlyCollections,
 
       outstandingMembers: topOutstandingMembers,
+
+      recentMeetings,
     });
   } catch (error) {
     res.status(500).json({
