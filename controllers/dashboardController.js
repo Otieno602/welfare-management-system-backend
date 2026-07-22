@@ -108,6 +108,37 @@ export const getDashboardStats = async (req, res) => {
       }),
     );
 
+    // ===== Outstanding Members =====
+
+    const outstandingMembers = [];
+
+    financialRecords.forEach((record) => {
+      record.payments.forEach((payment) => {
+        const remaining = record.amount - payment.amountPaid;
+
+        if (remaining > 0) {
+          outstandingMembers.push({
+            member: payment.member?.name || "Unknown Member",
+            title: record.title,
+            amount: remaining,
+            status: payment.status,
+          });
+        }
+      });
+    });
+
+    // Sort by highest amount first.
+    // If amounts are equal, sort alphabetically.
+    outstandingMembers.sort((a, b) => {
+      if (b.amount !== a.amount) {
+        return b.amount - a.amount;
+      }
+
+      return a.member.localeCompare(b.member);
+    });
+
+    const topOutstandingMembers = outstandingMembers.slice(0, 5);
+
     // ===== Dashboard Response =====
 
     res.json({
@@ -129,6 +160,8 @@ export const getDashboardStats = async (req, res) => {
       attendanceTrend,
 
       monthlyCollections,
+
+      outstandingMembers: topOutstandingMembers,
     });
   } catch (error) {
     res.status(500).json({
